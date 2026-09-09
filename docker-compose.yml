@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ac1_postgres
+    environment:
+      POSTGRES_DB: ac1_atdd_db
+      POSTGRES_USER: ac1_user
+      POSTGRES_PASSWORD: ac1_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ac1_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ac1_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  spring-app:
+    build: .
+    container_name: ac1_spring_app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ac1_atdd_db
+      SPRING_DATASOURCE_USERNAME: ac1_user
+      SPRING_DATASOURCE_PASSWORD: ac1_password
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ac1_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+
+networks:
+  ac1_network:
+    driver: bridge
