@@ -1,5 +1,6 @@
 package org.example.ac1_atdd.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -14,8 +15,9 @@ public class Comentario {
     private String texto;
 
     @Column(nullable = false)
-    private boolean util;
+    private Boolean util;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "aluno_id", nullable = false)
     private Aluno aluno;
@@ -43,11 +45,11 @@ public class Comentario {
         this.texto = texto;
     }
 
-    public boolean isUtil() {
+    public Boolean isUtil() {
         return util;
     }
 
-    public void setUtil(boolean util) {
+    public void setUtil(Boolean util) {
         this.util = util;
     }
 

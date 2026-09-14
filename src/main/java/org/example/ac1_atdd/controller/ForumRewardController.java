@@ -83,10 +83,11 @@ public class ForumRewardController {
     @PostMapping("/alunos/{alunoId}/comentarios")
     public ResponseEntity<Aluno> adicionarComentario(
             @PathVariable Long alunoId,
-            @RequestBody Comentario comentario,
-            @RequestParam(name = "util", defaultValue = "true") boolean util) {
+            @RequestParam(name = "util", defaultValue = "true") boolean util,
+            @RequestParam(name = "texto") String texto) {
 
         Aluno aluno = alunoRepository.findById(alunoId).orElseThrow();
+        Comentario comentario = new Comentario(texto, util);
 
         if (util) {
             aluno.adicionarComentarioUtil(comentario);
