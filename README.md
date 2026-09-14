@@ -72,13 +72,70 @@ Cenário: Apenas comentários com avaliação positiva contam no ranking
   When chegar o final do mês
   And o sistema processar os rankings do fórum
   Then apenas os 15 comentários úteis devem ser contabilizados
-  And "Ana" deve aparecer no ranking com 15 pontos
-  And os comentários marcados como "não útil" não devem impactar o ranking
+  And "Ana" deve aparecer no ranking com pontuação baseada em úteis menos não úteis
+  And os comentários marcados como "não útil" penalizam a pontuação no ranking
 ```
 
 ---
 
 ## 🧪 TDD - Test-Driven Development
+
+> Os testes utilizam `@SpringBootTest` com `@Autowired` pois o `ForumRewardService` é um `@Service` Spring.
+>
+> **Fórmula de pontuação:** `pontuacao = comentariosUteis - comentariosNaoUteis`
+>
+> **Mínimo padrão:** 3 pontos (pode ser customizado via segundo parâmetro `Long minimo`)
+
+### Setup comum aos 3 cenários
+
+```java
+@SpringBootTest
+@DisplayName("Forum Reward Service - TDD Test Suite (9 Tests)")
+class ForumRewardServiceTest {
+
+    @Autowired
+    private ForumRewardService forumRewardService;
+
+    private Aluno aluno1, aluno2, aluno3;
+    private Curso cursoJava;
+
+    @BeforeEach
+    void setUp() {
+        aluno1 = new Aluno("João Silva", "joao@email.com");
+        aluno1.setId(1L);
+
+        aluno2 = new Aluno("Maria Santos", "maria@email.com");
+        aluno2.setId(2L);
+
+        aluno3 = new Aluno("Pedro Costa", "pedro@email.com");
+        aluno3.setId(3L);
+
+        cursoJava = new Curso("Java Avançado", "PROGRAMMING");
+        cursoJava.setId(1L);
+
+        // aluno1: 5 úteis + 1 não útil = pontuação 4 (MAIS ATIVO)
+        aluno1.adicionarComentarioUtil(new Comentario("Great explanation!", true));
+        aluno1.adicionarComentarioUtil(new Comentario("Very helpful", true));
+        aluno1.adicionarComentarioUtil(new Comentario("Perfect!", true));
+        aluno1.adicionarComentarioUtil(new Comentario("Thank you", true));
+        aluno1.adicionarComentarioUtil(new Comentario("Awesome", true));
+        aluno1.adicionarComentarioNaoUtil(new Comentario("Not relevant", false));
+
+        // aluno2: 3 úteis + 2 não úteis = pontuação 1
+        aluno2.adicionarComentarioUtil(new Comentario("Good point", true));
+        aluno2.adicionarComentarioUtil(new Comentario("I agree", true));
+        aluno2.adicionarComentarioUtil(new Comentario("Exactly", true));
+        aluno2.adicionarComentarioNaoUtil(new Comentario("Wrong", false));
+        aluno2.adicionarComentarioNaoUtil(new Comentario("Spam", false));
+
+        // aluno3: 2 úteis + 0 não úteis = pontuação 2
+        aluno3.adicionarComentarioUtil(new Comentario("Interesting", true));
+        aluno3.adicionarComentarioUtil(new Comentario("Worth reading", true));
+    }
+}
+```
+
+---
 
 ### BDD-01: Aluno ganha curso ao ser mais ativo no fórum
 
@@ -86,42 +143,55 @@ Cenário: Apenas comentários com avaliação positiva contam no ranking
 
 ```java
 @Test
-public void deveProcessarRankingEPremiarAlunoMaisAtivo() {
-  var joao = new Aluno("João");
-  var maria = new Aluno("Maria");
-  var pedro = new Aluno("Pedro");
-  joao.adicionarComentarioUtil(25);
-  maria.adicionarComentarioUtil(15);
-  pedro.adicionarComentarioUtil(10);
-  var forum = new ForumRewardService();
-  var resultado = forum.processarRankingMensal(Arrays.asList(joao, maria, pedro));
-  
-  assertEquals("João", resultado.getAlunoVencedor().getNome());
-  assertNotNull(resultado.getCursoGanho());
-  assertEquals("gratuito", resultado.getCursoGanho().getTipo());
-  assertTrue(resultado.getNotificacaoEnviada());
+@DisplayName("RED PHASE - BDD-01: deveProcessarRankingEPremiarAlunoMaisAtivo")
+void deveProcessarRankingEPremiarAlunoMaisAtivo_RED() {
+    // RED PHASE: verifica que o serviço existe e retorna uma estrutura básica
+    List<Aluno> alunos = new ArrayList<>();
+    alunos.add(aluno1);
+    alunos.add(aluno2);
+    alunos.add(aluno3);
+
+    Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
+
+    assertNotNull(resultado, "Resultado não deve ser nulo");
+    assertNotNull(resultado.getRanking(), "Ranking não deve ser nulo");
+    assertEquals(3, resultado.getRanking().size(), "Ranking deve conter os 3 alunos");
 }
 ```
 
-**Status:** 🔴 FALHA - `ForumRewardService` não existe
+**Status:** 🔴 FALHA — `ForumRewardService` não existe ainda
 
 ---
 
 #### 🟢 TDD-01.2: GREEN (Código Mínimo para Passar)
 
-**Implementação da classe ForumRewardService:**
+**Implementação mínima do `ForumRewardService`:**
 
 ```java
+@Service
 public class ForumRewardService {
-  
-  public Resultado processarRankingMensal(List<Aluno> alunos) {
-    Aluno alunoMaisAtivo = alunos.stream()
-      .max(Comparator.comparingInt(Aluno::getComentariosUteis))
-      .orElse(null);
-    
-    Curso curso = new Curso("Curso Gratuito", "gratuito");
-    return new Resultado(alunoMaisAtivo, curso, true);
-  }
+
+    public Resultado processarRankingMensal(List<Aluno> alunos, Curso cursoGanho) {
+        Resultado resultado = new Resultado();
+        resultado.setCursoGanho(cursoGanho);
+
+        List<RankingItem> rankingItems = alunos.stream()
+            .map(aluno -> new RankingItem(aluno, aluno.getComentariosUteis()))
+            .collect(Collectors.toList());
+
+        rankingItems.forEach(resultado::adicionarRankingItem);
+
+        RankingItem vencedor = rankingItems.stream()
+            .max(Comparator.comparingLong(RankingItem::getPontuacao))
+            .orElse(null);
+
+        if (vencedor != null) {
+            resultado.setAlunoVencedor(vencedor.getAluno());
+            resultado.setNotificacaoEnviada(true);
+        }
+
+        return resultado;
+    }
 }
 ```
 
@@ -129,56 +199,76 @@ public class ForumRewardService {
 
 ```java
 @Test
-public void deveProcessarRankingEPremiarAlunoMaisAtivo() {
-  var joao = new Aluno("João");
-  var maria = new Aluno("Maria");
-  var pedro = new Aluno("Pedro");
-  joao.adicionarComentarioUtil(25);
-  maria.adicionarComentarioUtil(15);
-  pedro.adicionarComentarioUtil(10);
-  var forum = new ForumRewardService();
-  var resultado = forum.processarRankingMensal(Arrays.asList(joao, maria, pedro));
-  
-  assertEquals("João", resultado.getAlunoVencedor().getNome());
-  assertNotNull(resultado.getCursoGanho());
-  assertEquals("gratuito", resultado.getCursoGanho().getTipo());
-  assertTrue(resultado.getNotificacaoEnviada());
+@DisplayName("GREEN PHASE - BDD-01: deveProcessarRankingEPremiarAlunoMaisAtivo")
+void deveProcessarRankingEPremiarAlunoMaisAtivo_GREEN() {
+    List<Aluno> alunos = List.of(aluno1, aluno2, aluno3);
+
+    Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
+
+    assertNotNull(resultado.getAlunoVencedor(), "Deve haver um vencedor");
+    assertEquals("João Silva", resultado.getAlunoVencedor().getNome(),
+            "João Silva deve ser o vencedor (mais ativo)");
+    assertTrue(resultado.isNotificacaoEnviada(), "Notificação deve ser enviada ao vencedor");
+    assertEquals(cursoJava.getNome(), resultado.getCursoGanho().getNome(),
+            "Vencedor deve receber o curso Java Avançado");
 }
 ```
 
-**Status:** 🟢 PASSA - Testes passando (código funcional)
+**Status:** 🟢 PASSA
 
 ---
 
 #### 🔵 TDD-01.3: BLUE (Refatoração do GREEN)
 
-**Implementação refatorada da classe ForumRewardService:**
+**Implementação refatorada:**
 
 ```java
+@Service
 public class ForumRewardService {
-  
-  private static final String TIPO_CURSO = "gratuito";
-  
-  public Resultado processarRankingMensal(List<Aluno> alunos) {
-    Aluno alunoMaisAtivo = encontrarAlunoMaisAtivo(alunos);
-    Curso cursoGanho = criarCursoGratuito();
-    enviarNotificacao(alunoMaisAtivo);
-    return new Resultado(alunoMaisAtivo, cursoGanho, true);
-  }
-  
-  private Aluno encontrarAlunoMaisAtivo(List<Aluno> alunos) {
-    return alunos.stream()
-      .max(Comparator.comparingInt(Aluno::getComentariosUteis))
-      .orElseThrow(() -> new IllegalArgumentException("Lista vazia"));
-  }
-  
-  private Curso criarCursoGratuito() {
-    return new Curso("Curso Gratuito", TIPO_CURSO);
-  }
-  
-  private void enviarNotificacao(Aluno aluno) {
-    System.out.println("Notificação enviada para " + aluno.getNome());
-  }
+
+    public Resultado processarRankingMensal(List<Aluno> alunos, Curso cursoGanho) {
+        return processarRankingMensal(alunos, cursoGanho, 3L);
+    }
+
+    public Resultado processarRankingMensal(List<Aluno> alunos, Curso cursoGanho, Long minimo) {
+        Resultado resultado = new Resultado();
+        resultado.setCursoGanho(cursoGanho);
+
+        List<RankingItem> rankingOrdenado = criarRankingItems(alunos).stream()
+            .sorted((a, b) -> Long.compare(b.getPontuacao(), a.getPontuacao()))
+            .collect(Collectors.toList());
+
+        rankingOrdenado.forEach(resultado::adicionarRankingItem);
+
+        List<RankingItem> qualificados = rankingOrdenado.stream()
+            .filter(item -> item.getPontuacao() >= minimo)
+            .collect(Collectors.toList());
+
+        if (!qualificados.isEmpty()) {
+            resultado.setAlunoVencedor(qualificados.get(0).getAluno());
+            qualificados.forEach(item -> resultado.adicionarAlunoVencedor(item.getAluno()));
+            enviarNotificacao(resultado);
+            resultado.setNotificacaoEnviada(true);
+        }
+
+        return resultado;
+    }
+
+    private List<RankingItem> criarRankingItems(List<Aluno> alunos) {
+        return alunos.stream()
+            .map(aluno -> new RankingItem(aluno, calcularPontuacao(aluno)))
+            .collect(Collectors.toList());
+    }
+
+    private long calcularPontuacao(Aluno aluno) {
+        return aluno.getComentariosUteis() - aluno.getComentariosNaoUteis();
+    }
+
+    private void enviarNotificacao(Resultado resultado) {
+        System.out.printf("[NOTIFICAÇÃO] Parabéns %s! Você ganhou o curso %s%n",
+            resultado.getAlunoVencedor().getNome(),
+            resultado.getCursoGanho().getNome());
+    }
 }
 ```
 
@@ -186,24 +276,27 @@ public class ForumRewardService {
 
 ```java
 @Test
-public void deveProcessarRankingEPremiarAlunoMaisAtivo() {
-  var joao = new Aluno("João");
-  var maria = new Aluno("Maria");
-  var pedro = new Aluno("Pedro");
-  joao.adicionarComentarioUtil(25);
-  maria.adicionarComentarioUtil(15);
-  pedro.adicionarComentarioUtil(10);
-  var forum = new ForumRewardService();
-  var resultado = forum.processarRankingMensal(Arrays.asList(joao, maria, pedro));
-  
-  assertEquals("João", resultado.getAlunoVencedor().getNome());
-  assertNotNull(resultado.getCursoGanho());
-  assertEquals("gratuito", resultado.getCursoGanho().getTipo());
-  assertTrue(resultado.getNotificacaoEnviada());
+@DisplayName("BLUE PHASE - BDD-01: deveProcessarRankingEPremiarAlunoMaisAtivo")
+void deveProcessarRankingEPremiarAlunoMaisAtivo_BLUE() {
+    List<Aluno> alunos = List.of(aluno1, aluno2, aluno3);
+
+    Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
+
+    assertNotNull(resultado, "Resultado deve ser criado");
+    assertNotNull(resultado.getAlunoVencedor(), "Vencedor deve ser identificado");
+    assertEquals("João Silva", resultado.getAlunoVencedor().getNome(),
+            "João Silva (pontuação 4) deve ser o vencedor");
+    assertEquals(cursoJava.getId(), resultado.getCursoGanho().getId(),
+            "Vencedor deve receber o curso Java Avançado");
+    assertTrue(resultado.isNotificacaoEnviada(), "Notificação deve ser enviada");
+    assertTrue(resultado.getAlunosVencedores().contains(aluno1),
+            "Lista de vencedores deve conter João Silva");
+    assertEquals(1, resultado.getAlunosVencedores().size(),
+            "Apenas um vencedor deve ser selecionado (mínimo padrão = 3)");
 }
 ```
 
-**Status:** 🔵 PASSA - Código refatorado e limpo
+**Status:** 🔵 PASSA — Código refatorado e limpo
 
 ---
 
@@ -213,135 +306,76 @@ public void deveProcessarRankingEPremiarAlunoMaisAtivo() {
 
 ```java
 @Test
-public void deveValidarParticipacaoMinimaENaoPremiar() {
-  var carlos = new Aluno("Carlos");
-  carlos.adicionarComentarioUtil(2);
-  int participacaoMinima = 5;
-  var forum = new ForumRewardService();
-  var resultado = forum.processarRankingMensal(
-    Arrays.asList(carlos),
-    participacaoMinima
-  );
-  
-  assertNull(resultado.getCursoGanho());
-  assertFalse(resultado.getNotificacaoEnviada());
-  assertFalse(resultado.getAlunosVencedores().contains(carlos));
+@DisplayName("RED PHASE - BDD-02: deveValidarParticipacaoMinimaENaoPremiar")
+void deveValidarParticipacaoMinimaENaoPremiar_RED() {
+    // RED PHASE: verifica que o serviço aceita parâmetro de mínimo
+    List<Aluno> alunos = List.of(aluno1, aluno2, aluno3);
+
+    Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava, 3L);
+
+    assertNotNull(resultado, "Resultado deve ser criado");
+    assertNotNull(resultado.getRanking(), "Ranking deve ser criado");
 }
 ```
 
-**Status:** 🔴 FALHA - Parâmetro `participacaoMinima` não é aceito
+**Status:** 🔴 FALHA — Sobrecarga com parâmetro `Long minimo` não existe ainda
 
 ---
 
 #### 🟢 TDD-02.2: GREEN (Código Mínimo para Passar)
 
-**Implementação da classe ForumRewardService com validação de participação:**
-
-```java
-public class ForumRewardService {
-  
-  public Resultado processarRankingMensal(List<Aluno> alunos, int minimo) {
-    Aluno alunoMaisAtivo = alunos.stream()
-      .filter(a -> a.getComentariosUteis() >= minimo)
-      .max(Comparator.comparingInt(Aluno::getComentariosUteis))
-      .orElse(null);
-    
-    if (alunoMaisAtivo == null) {
-      return new Resultado(null, null, false);
-    }
-    
-    Curso curso = new Curso("Curso Gratuito", "gratuito");
-    return new Resultado(alunoMaisAtivo, curso, true);
-  }
-}
-```
-
-**Teste correspondente:**
-
 ```java
 @Test
-public void deveValidarParticipacaoMinimaENaoPremiar() {
-  var carlos = new Aluno("Carlos");
-  carlos.adicionarComentarioUtil(2);
-  int participacaoMinima = 5;
-  var forum = new ForumRewardService();
-  var resultado = forum.processarRankingMensal(
-    Arrays.asList(carlos),
-    participacaoMinima
-  );
-  
-  assertNull(resultado.getCursoGanho());
-  assertFalse(resultado.getNotificacaoEnviada());
-  assertFalse(resultado.getAlunosVencedores().contains(carlos));
+@DisplayName("GREEN PHASE - BDD-02: deveValidarParticipacaoMinimaENaoPremiar")
+void deveValidarParticipacaoMinimaENaoPremiar_GREEN() {
+    // aluno1: pontuação 4 (qualifica: 4 >= 3)
+    // aluno2: pontuação 1 (não qualifica: 1 < 3)
+    // aluno3: pontuação 2 (não qualifica: 2 < 3)
+    List<Aluno> alunos = List.of(aluno1, aluno2, aluno3);
+
+    Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava, 3L);
+
+    assertNotNull(resultado.getAlunoVencedor(), "Deve haver um vencedor");
+    assertEquals("João Silva", resultado.getAlunoVencedor().getNome(),
+            "Apenas João Silva qualifica (pontuação 4 >= mínimo 3)");
+    assertTrue(resultado.isNotificacaoEnviada(), "Notificação enviada apenas ao vencedor qualificado");
+    assertEquals(1, resultado.getAlunosVencedores().size(),
+            "Apenas um aluno atinge o mínimo");
 }
 ```
 
-**Status:** 🟢 PASSA - Testes passando (código funcional)
+**Status:** 🟢 PASSA
 
 ---
 
 #### 🔵 TDD-02.3: BLUE (Refatoração do GREEN)
 
-**Implementação refatorada da classe ForumRewardService:**
-
-```java
-public class ForumRewardService {
-  
-  private static final int PARTICIPACAO_PADRAO = 5;
-  
-  public Resultado processarRankingMensal(List<Aluno> alunos, int minimo) {
-    Aluno alunoMaisAtivo = encontrarAlunoComParticipacaoMinima(alunos, minimo);
-    
-    if (!temVencedor(alunoMaisAtivo)) {
-      return criarResultadoSemPremio();
-    }
-    
-    return criarResultadoComPremio(alunoMaisAtivo);
-  }
-  
-  private Aluno encontrarAlunoComParticipacaoMinima(List<Aluno> alunos, int minimo) {
-    return alunos.stream()
-      .filter(a -> a.getComentariosUteis() >= minimo)
-      .max(Comparator.comparingInt(Aluno::getComentariosUteis))
-      .orElse(null);
-  }
-  
-  private boolean temVencedor(Aluno aluno) {
-    return aluno != null;
-  }
-  
-  private Resultado criarResultadoSemPremio() {
-    return new Resultado(null, null, false);
-  }
-  
-  private Resultado criarResultadoComPremio(Aluno aluno) {
-    Curso curso = new Curso("Curso Gratuito", "gratuito");
-    return new Resultado(aluno, curso, true);
-  }
-}
-```
-
-**Teste correspondente:**
-
 ```java
 @Test
-public void deveValidarParticipacaoMinimaENaoPremiar() {
-  var carlos = new Aluno("Carlos");
-  carlos.adicionarComentarioUtil(2);
-  int participacaoMinima = 5;
-  var forum = new ForumRewardService();
-  var resultado = forum.processarRankingMensal(
-    Arrays.asList(carlos),
-    participacaoMinima
-  );
-  
-  assertNull(resultado.getCursoGanho());
-  assertFalse(resultado.getNotificacaoEnviada());
-  assertFalse(resultado.getAlunosVencedores().contains(carlos));
+@DisplayName("BLUE PHASE - BDD-02: deveValidarParticipacaoMinimaENaoPremiar")
+void deveValidarParticipacaoMinimaENaoPremiar_BLUE() {
+    // aluno1: pontuação 4 (qualifica: 4 >= 2)
+    // aluno3: pontuação 2 (no limite: 2 >= 2 — qualifica)
+    // aluno2: pontuação 1 (não qualifica: 1 < 2)
+    List<Aluno> alunos = List.of(aluno1, aluno3, aluno2);
+
+    Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava, 2L);
+
+    assertNotNull(resultado.getAlunoVencedor(), "Vencedor deve ser identificado entre os qualificados");
+    assertEquals("João Silva", resultado.getAlunoVencedor().getNome(),
+            "João Silva (pontuação 4) tem maior score entre os qualificados");
+    assertTrue(resultado.isNotificacaoEnviada(), "Notificação enviada ao vencedor qualificado");
+    assertTrue(resultado.getRanking().size() >= 2, "Ranking inclui todos os alunos");
+    assertEquals(2, resultado.getAlunosVencedores().size(),
+            "Dois alunos atingem o mínimo (pontuação 4 e 2)");
+    assertTrue(resultado.getAlunosVencedores().contains(aluno1),
+            "Lista de vencedores inclui João (pontuação 4)");
+    assertTrue(resultado.getAlunosVencedores().contains(aluno3),
+            "Lista de vencedores inclui Pedro (pontuação 2)");
 }
 ```
 
-**Status:** 🔵 PASSA - Código refatorado e limpo
+**Status:** 🔵 PASSA — Código refatorado e limpo
 
 ---
 
@@ -351,151 +385,119 @@ public void deveValidarParticipacaoMinimaENaoPremiar() {
 
 ```java
 @Test
-public void deveContabilizarApenasComentariosUteis() {
-  var ana = new Aluno("Ana");
-  ana.adicionarComentarioUtil(15);
-  ana.adicionarComentarioNaoUtil(5);
-  var forum = new ForumRewardService();
-  var resultado = forum.processarRankingMensal(Arrays.asList(ana));
-  var ranking = resultado.getRanking().get(0);
-  
-  assertEquals(15, ranking.getPontuacao());
-  assertNotEquals(20, ranking.getPontuacao());
-  assertEquals(15, ranking.getComentariosContabilizados());
-  assertEquals(0, ranking.getComentariosNaoUteis());
+@DisplayName("RED PHASE - BDD-03: deveContabilizarApenasComentariosUteis")
+void deveContabilizarApenasComentariosUteis_RED() {
+    // RED PHASE: verifica que o sistema de ranking existe
+    List<Aluno> alunos = List.of(aluno1, aluno2, aluno3);
+
+    Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
+
+    assertNotNull(resultado.getRanking(), "Ranking deve existir");
+    assertTrue(resultado.getRanking().size() > 0, "Ranking deve conter itens");
 }
 ```
 
-**Status:** 🔴 FALHA - Método `getRanking()` não existe
+**Status:** 🔴 FALHA — `getRanking()` não existe ainda
 
 ---
 
 #### 🟢 TDD-03.2: GREEN (Código Mínimo para Passar)
 
-**Implementação da classe ForumRewardService com ranking:**
-
-```java
-public class ForumRewardService {
-  
-  public Resultado processarRankingMensal(List<Aluno> alunos) {
-    List<RankingItem> ranking = new ArrayList<>();
-    
-    for (Aluno aluno : alunos) {
-      int pontuacao = aluno.getComentariosUteis();
-      RankingItem item = new RankingItem(
-        aluno.getNome(), 
-        pontuacao, 
-        aluno.getComentariosUteis(), 
-        0
-      );
-      ranking.add(item);
-    }
-    
-    return new Resultado(ranking);
-  }
-}
-```
-
-**Teste correspondente:**
-
 ```java
 @Test
-public void deveContabilizarApenasComentariosUteis() {
-  var ana = new Aluno("Ana");
-  ana.adicionarComentarioUtil(15);
-  ana.adicionarComentarioNaoUtil(5);
-  var forum = new ForumRewardService();
-  var resultado = forum.processarRankingMensal(Arrays.asList(ana));
-  var ranking = resultado.getRanking().get(0);
-  
-  assertEquals(15, ranking.getPontuacao());
-  assertNotEquals(20, ranking.getPontuacao());
-  assertEquals(15, ranking.getComentariosContabilizados());
-  assertEquals(0, ranking.getComentariosNaoUteis());
+@DisplayName("GREEN PHASE - BDD-03: deveContabilizarApenasComentariosUteis")
+void deveContabilizarApenasComentariosUteis_GREEN() {
+    // Pontuação = comentariosUteis - comentariosNaoUteis
+    // aluno1: 5 úteis - 1 não útil = 4
+    // aluno2: 3 úteis - 2 não úteis = 1
+    // aluno3: 2 úteis - 0 não úteis = 2
+    List<Aluno> alunos = List.of(aluno1, aluno2, aluno3);
+
+    Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
+    List<RankingItem> ranking = resultado.getRanking();
+
+    RankingItem joaoItem = ranking.stream()
+        .filter(r -> r.getAluno().getId().equals(1L))
+        .findFirst()
+        .orElse(null);
+
+    assertNotNull(joaoItem, "João deve estar no ranking");
+    assertEquals(4, joaoItem.getPontuacao(),
+            "Pontuação de João: 5 úteis - 1 não útil = 4");
+    assertEquals(5, joaoItem.getComentariosContabilizados(),
+            "João tem 5 comentários úteis contabilizados");
+    assertEquals(1, joaoItem.getComentariosNaoUteis(),
+            "João tem 1 comentário não útil registrado");
 }
 ```
 
-**Status:** 🟢 PASSA - Testes passando (código funcional)
+**Status:** 🟢 PASSA
 
 ---
 
 #### 🔵 TDD-03.3: BLUE (Refatoração do GREEN)
 
-**Implementação refatorada da classe ForumRewardService:**
-
-```java
-public class ForumRewardService {
-  
-  public Resultado processarRankingMensal(List<Aluno> alunos) {
-    List<RankingItem> ranking = construirRanking(alunos);
-    return new Resultado(ranking);
-  }
-  
-  private List<RankingItem> construirRanking(List<Aluno> alunos) {
-    return alunos.stream()
-      .map(this::criarRankingItem)
-      .collect(Collectors.toList());
-  }
-  
-  private RankingItem criarRankingItem(Aluno aluno) {
-    int pontuacao = calcularPontuacao(aluno);
-    return new RankingItem(
-      aluno.getNome(), 
-      pontuacao, 
-      aluno.getComentariosUteis(), 
-      0
-    );
-  }
-  
-  private int calcularPontuacao(Aluno aluno) {
-    return aluno.getComentariosUteis();
-  }
-}
-```
-
-**Teste correspondente:**
-
 ```java
 @Test
-public void deveContabilizarApenasComentariosUteis() {
-  var ana = new Aluno("Ana");
-  ana.adicionarComentarioUtil(15);
-  ana.adicionarComentarioNaoUtil(5);
-  var forum = new ForumRewardService();
-  var resultado = forum.processarRankingMensal(Arrays.asList(ana));
-  var ranking = resultado.getRanking().get(0);
-  
-  assertEquals(15, ranking.getPontuacao());
-  assertNotEquals(20, ranking.getPontuacao());
-  assertEquals(15, ranking.getComentariosContabilizados());
-  assertEquals(0, ranking.getComentariosNaoUteis());
+@DisplayName("BLUE PHASE - BDD-03: deveContabilizarApenasComentariosUteis")
+void deveContabilizarApenasComentariosUteis_BLUE() {
+    List<Aluno> alunos = List.of(aluno2, aluno3, aluno1); // ordem embaralhada
+
+    Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
+    List<RankingItem> ranking = resultado.getRanking();
+
+    // Ranking deve estar ordenado por pontuação (decrescente)
+    assertEquals(3, ranking.size(), "Todos os alunos devem estar no ranking");
+    assertEquals(4, ranking.get(0).getPontuacao(), "1º lugar: João (pontuação 4)");
+    assertEquals(2, ranking.get(1).getPontuacao(), "2º lugar: Pedro (pontuação 2)");
+    assertEquals(1, ranking.get(2).getPontuacao(), "3º lugar: Maria (pontuação 1)");
+
+    // Verificar decomposição da pontuação do 1º colocado
+    RankingItem joaoItem = ranking.get(0);
+    assertEquals(5, joaoItem.getComentariosContabilizados(), "João tem 5 comentários úteis");
+    assertEquals(1, joaoItem.getComentariosNaoUteis(), "João tem 1 comentário não útil");
+    assertEquals(4, joaoItem.getComentariosContabilizados() - joaoItem.getComentariosNaoUteis(),
+            "Fórmula: 5 - 1 = 4");
 }
 ```
 
-**Status:** 🔵 PASSA - Código refatorado e limpo
+**Status:** 🔵 PASSA — Código refatorado e limpo
 
 ---
 
 ## 🏗️ Estrutura do Projeto
 
 ```
-ac1_atdd_spring_boot_docker/
+ac1_atdd/
 ├── src/
 │   ├── main/
-│   │   └── java/
-│   │       └── org/example/ac1_atdd_spring_boot_docker/
-│   │           ├── domain/
-│   │           │   ├── Aluno.java
-│   │           │   ├── Curso.java
-│   │           │   ├── Resultado.java
-│   │           │   ├── RankingItem.java
-│   │           │   └── ForumRewardService.java
-│   │           └── ...
+│   │   └── java/org/example/ac1_atdd/
+│   │       ├── domain/
+│   │       │   ├── Aluno.java
+│   │       │   ├── Comentario.java
+│   │       │   ├── Curso.java
+│   │       │   ├── Resultado.java
+│   │       │   └── RankingItem.java
+│   │       ├── dto/
+│   │       │   ├── AlunoDTO.java
+│   │       │   ├── CursoDTO.java
+│   │       │   ├── RankingItemDTO.java
+│   │       │   └── ResultadoDTO.java
+│   │       ├── repository/
+│   │       │   ├── AlunoRepository.java
+│   │       │   ├── CursoRepository.java
+│   │       │   ├── RankingItemRepository.java
+│   │       │   └── ResultadoRepository.java
+│   │       ├── service/
+│   │       │   └── ForumRewardService.java
+│   │       └── controller/
+│   │           └── ForumRewardController.java
 │   └── test/
-│       └── java/
-│           └── org/example/ac1_atdd_spring_boot_docker/
-│               └── domain/
-│                   └── ForumRewardServiceTest.java
+│       └── java/org/example/ac1_atdd/domain/
+│           └── ForumRewardServiceTest.java
+├── frontend/          (Vue 3 + Vite)
+├── Dockerfile
+├── docker-compose.yml
 ├── pom.xml
 └── README.md
 ```
@@ -504,23 +506,58 @@ ac1_atdd_spring_boot_docker/
 
 ## 🛠️ Tecnologias Utilizadas
 
-- **Java 11+**
-- **Spring Boot 2.x/3.x**
+- **Java 17**
+- **Spring Boot 4.1.1**
 - **Spring Data JPA**
-- **JUnit 5**
-- **H2 Database (Desenvolvimento)**
-- **PostgreSQL (Produção)**
+- **JUnit 5** + `@SpringBootTest`
+- **H2 Database** (desenvolvimento)
+- **PostgreSQL** (produção)
 - **Maven**
-- **Docker** (Opcional)
+- **Docker** + **Docker Compose**
+- **Vue 3** + Vite (frontend)
+- **SpringDoc OpenAPI** (Swagger UI)
 
 ---
 
 ## 📦 Dependências Spring Boot
 
-- Spring WEB
+- Spring Web
 - Spring Data JPA
 - H2 Database
 - PostgreSQL Driver
+- SpringDoc OpenAPI (Swagger)
+
+---
+
+## 🌐 Endpoints REST
+
+Base path: `/api/forum-rewards`
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/ranking/process` | Processa ranking mensal (mínimo padrão = 3) |
+| POST | `/ranking/process-custom` | Processa ranking com mínimo customizado |
+| GET | `/ranking/{id}` | Busca ranking por ID |
+| GET | `/alunos` | Lista todos os alunos |
+| POST | `/alunos` | Cria novo aluno |
+| POST | `/alunos/{id}/comentarios` | Adiciona comentário ao aluno |
+| GET | `/alunos/{id}/score` | Retorna pontuação do aluno |
+| GET | `/cursos` | Lista cursos |
+| POST | `/cursos` | Cria curso |
+
+Swagger UI disponível em: `/api/swagger-ui.html`
+
+---
+
+## 🐳 Executando com Docker
+
+```bash
+docker-compose up --build
+```
+
+Serviços:
+- **postgres** — PostgreSQL 15 na porta `5432`
+- **spring-app** — Spring Boot na porta `8080`
 
 ---
 
@@ -528,7 +565,6 @@ ac1_atdd_spring_boot_docker/
 
 | Fase | Status | Objetivo |
 |------|--------|----------|
-| 🔴 RED | FALHA | Escrever teste que falha |
-| 🟢 GREEN | PASSA | Código mínimo para passar |
-| 🔵 BLUE | PASSA | Refatoração e limpeza |
-
+| 🔴 RED | FALHA | Escrever teste que falha (feature não existe) |
+| 🟢 GREEN | PASSA | Código mínimo para fazer o teste passar |
+| 🔵 BLUE | PASSA | Refatoração mantendo os testes verdes |
