@@ -137,6 +137,35 @@ class ForumRewardServiceTest {
 
 ---
 
+## 📈 Cobertura de Testes — JaCoCo
+
+A fase **BLUE** do ciclo TDD resulta em **100% de cobertura** do `ForumRewardService`, verificada pelo relatório gerado pelo plugin **JaCoCo** (`mvn verify`).
+
+### Métricas alcançadas
+
+| Métrica | Perdidas | Cobertas | Cobertura |
+|---------|----------|----------|-----------|
+| Instruções | 0 | 158 | **100%** |
+| Branches | 0 | 6 | **100%** |
+| Linhas | 0 | 33 | **100%** |
+| Métodos | 0 | 12 | **100%** |
+
+> O relatório cobre exclusivamente o `ForumRewardService` — classes de domínio (entidades JPA), repositórios, DTOs e o controller são excluídos da análise via configuração do plugin no `pom.xml`, pois não contêm lógica de negócio sob teste.
+
+### Como gerar o relatório
+
+```bash
+mvn verify -Dmaven.test.failure.ignore=true
+```
+
+> O flag `-Dmaven.test.failure.ignore=true` é necessário porque os testes **RED** falham por design (evidência da fase RED do TDD). O relatório é gerado em `target/site/jacoco/index.html`.
+
+### Relatório JaCoCo — 100% de cobertura
+
+![img_3.png](img_3.png)
+
+---
+
 ### BDD-01: Aluno ganha curso ao ser mais ativo no fórum
 
 #### 🔴 TDD-01.1: RED (Teste para Falhar)
@@ -160,6 +189,8 @@ void deveProcessarRankingEPremiarAlunoMaisAtivo_RED() {
 ```
 
 **Status:** 🔴 FALHA — `ForumRewardService` não existe ainda
+
+![img.png](img.png)
 
 ---
 
@@ -320,6 +351,8 @@ void deveValidarParticipacaoMinimaENaoPremiar_RED() {
 
 **Status:** 🔴 FALHA — Sobrecarga com parâmetro `Long minimo` não existe ainda
 
+![img_1.png](img_1.png)
+
 ---
 
 #### 🟢 TDD-02.2: GREEN (Código Mínimo para Passar)
@@ -398,6 +431,8 @@ void deveContabilizarApenasComentariosUteis_RED() {
 ```
 
 **Status:** 🔴 FALHA — `getRanking()` não existe ainda
+
+![img_2.png](img_2.png)
 
 ---
 
@@ -568,3 +603,4 @@ Serviços:
 | 🔴 RED | FALHA | Escrever teste que falha (feature não existe) |
 | 🟢 GREEN | PASSA | Código mínimo para fazer o teste passar |
 | 🔵 BLUE | PASSA | Refatoração mantendo os testes verdes |
+
