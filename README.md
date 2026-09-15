@@ -273,6 +273,8 @@ void deveProcessarRankingEPremiarAlunoMaisAtivo_GREEN() {
 
 **Status:** 🟢 PASSA
 
+![img_7.png](img_7.png)
+
 ---
 
 #### 🔵 TDD-01.3: BLUE (Refatoração do GREEN)
@@ -355,6 +357,8 @@ void deveProcessarRankingEPremiarAlunoMaisAtivo_BLUE() {
 
 **Status:** 🔵 PASSA — Código refatorado e limpo
 
+![img_8.png](img_8.png)
+
 ---
 
 ### BDD-02: Aluno não ganha curso se não tiver participação mínima
@@ -405,6 +409,8 @@ void deveValidarParticipacaoMinimaENaoPremiar_GREEN() {
 
 **Status:** 🟢 PASSA
 
+![img_9.png](img_9.png)
+
 ---
 
 #### 🔵 TDD-02.3: BLUE (Refatoração do GREEN)
@@ -435,6 +441,8 @@ void deveValidarParticipacaoMinimaENaoPremiar_BLUE() {
 ```
 
 **Status:** 🔵 PASSA — Código refatorado e limpo
+
+![img_10.png](img_10.png)
 
 ---
 
@@ -494,6 +502,8 @@ void deveContabilizarApenasComentariosUteis_GREEN() {
 
 **Status:** 🟢 PASSA
 
+![img_11.png](img_11.png)
+
 ---
 
 #### 🔵 TDD-03.3: BLUE (Refatoração do GREEN)
@@ -523,6 +533,8 @@ void deveContabilizarApenasComentariosUteis_BLUE() {
 ```
 
 **Status:** 🔵 PASSA — Código refatorado e limpo
+
+![img_12.png](img_12.png)
 
 ---
 
