@@ -1,39 +1,17 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: ac1_postgres
-    environment:
-      POSTGRES_DB: ac1_atdd_db
-      POSTGRES_USER: ac1_user
-      POSTGRES_PASSWORD: ac1_password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - ac1_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ac1_user"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   spring-app:
     build: .
     container_name: ac1_spring_app
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ac1_atdd_db
-      SPRING_DATASOURCE_USERNAME: ac1_user
-      SPRING_DATASOURCE_PASSWORD: ac1_password
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/ac1_atdd_dev
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
       SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
     ports:
       - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - ac1_network
     healthcheck:
@@ -43,8 +21,17 @@ services:
       retries: 3
       start_period: 40s
 
-volumes:
-  postgres_data:
+  frontend:
+    build: ./frontend
+    container_name: ac1_frontend
+    environment:
+      VITE_API_URL: http://spring-app:8080
+    ports:
+      - "3000:3000"
+    networks:
+      - ac1_network
+    depends_on:
+      - spring-app
 
 networks:
   ac1_network:
