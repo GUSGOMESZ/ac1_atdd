@@ -2,6 +2,8 @@
 
 Projeto de implementação de **TDD (Test-Driven Development)** e **BDD (Behavior-Driven Development)** usando Spring Boot, Cucumber e Testes Unitários com JUnit.
 
+![img_5.png](img_5.png)
+
 ---
 
 ## 👥 User Stories
@@ -580,7 +582,17 @@ Base path: `/api/forum-rewards`
 | GET | `/cursos` | Lista cursos |
 | POST | `/cursos` | Cria curso |
 
-Swagger UI disponível em: `/api/swagger-ui.html`
+---
+
+## 📋 Swagger UI
+
+A documentação interativa da API é gerada automaticamente pelo **SpringDoc OpenAPI** e fica disponível assim que a aplicação estiver rodando.
+
+**URL:** `http://localhost:8080/api/swagger-ui.html`
+
+**API Docs (JSON):** `http://localhost:8080/api/v3/api-docs`
+
+![img_6.png](img_6.png)
 
 ---
 
@@ -589,6 +601,8 @@ Swagger UI disponível em: `/api/swagger-ui.html`
 ```bash
 docker-compose up --build
 ```
+
+![img_4.png](img_4.png)
 
 Serviços:
 - **postgres** — PostgreSQL 15 na porta `5432`
