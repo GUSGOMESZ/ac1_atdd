@@ -6,6 +6,30 @@ Projeto de implementação de **TDD (Test-Driven Development)** e **BDD (Behavio
 
 ---
 
+## 🐳 Executando com Docker
+
+```bash
+docker-compose -f docker-compose.yml build
+
+docker-compose -f docker-compose.yml up -d
+```
+
+![img_4.png](img_4.png)
+
+---
+
+## 📋 Swagger UI
+
+A documentação interativa da API é gerada automaticamente pelo **SpringDoc OpenAPI** e fica disponível assim que a aplicação estiver rodando.
+
+**URL:** `http://localhost:8080/api/swagger-ui.html`
+
+**API Docs (JSON):** `http://localhost:8080/api/v3/api-docs`
+
+![img_6.png](img_6.png)
+
+---
+
 ## 👥 User Stories
 
 ### US-01: [ADM] Configurar cursos disponíveis no plano básico
@@ -583,26 +607,6 @@ Base path: `/api/forum-rewards`
 | POST | `/cursos` | Cria curso |
 
 ---
-
-## 📋 Swagger UI
-
-A documentação interativa da API é gerada automaticamente pelo **SpringDoc OpenAPI** e fica disponível assim que a aplicação estiver rodando.
-
-**URL:** `http://localhost:8080/api/swagger-ui.html`
-
-**API Docs (JSON):** `http://localhost:8080/api/v3/api-docs`
-
-![img_6.png](img_6.png)
-
----
-
-## 🐳 Executando com Docker
-
-```bash
-docker-compose up --build
-```
-
-![img_4.png](img_4.png)
 
 Serviços:
 - **postgres** — PostgreSQL 15 na porta `5432`
