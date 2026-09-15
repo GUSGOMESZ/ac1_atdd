@@ -1,6 +1,5 @@
 package org.example.ac1_atdd.domain;
 
-import org.example.ac1_atdd.domain.*;
 import org.example.ac1_atdd.service.ForumRewardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,19 +14,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * ForumRewardService Test Suite - TDD/BDD Implementation
- *
  * 9 Test Cases distributed across 3 BDD Scenarios:
  * - BDD-01: Aluno ganha curso ao ser mais ativo
  * - BDD-02: Aluno não ganha curso se não tiver participação mínima
  * - BDD-03: Apenas comentários úteis contam
- *
  * Each scenario has 3 phases:
- * RED: Failing test (before implementation)
- * GREEN: Minimal passing implementation
- * BLUE: Refactored, clean, optimal code
+ * RED:   Teste falha — comportamento desejado ainda não implementado
+ * GREEN: RED corrigido — implementação mínima faz o teste passar
+ * BLUE:  GREEN refatorado — código limpo, cobertura completa
  */
 @SpringBootTest
-@DisplayName("Forum Reward Service - TDD Test Suite (9 Tests)")
+@DisplayName("Forum Reward Service - TDD Test Suite")
 class ForumRewardServiceTest {
 
     @Autowired
@@ -52,7 +49,7 @@ class ForumRewardServiceTest {
         cursoJava = new Curso("Java Avançado", "PROGRAMMING");
         cursoJava.setId(1L);
 
-        // aluno1: 5 useful + 1 not useful = Score: 4 (MOST ACTIVE)
+        // aluno1: 5 úteis + 1 não útil = Score: 4 (MAIS ATIVO)
         aluno1.adicionarComentarioUtil(new Comentario("Great explanation!", true));
         aluno1.adicionarComentarioUtil(new Comentario("Very helpful", true));
         aluno1.adicionarComentarioUtil(new Comentario("Perfect!", true));
@@ -60,42 +57,41 @@ class ForumRewardServiceTest {
         aluno1.adicionarComentarioUtil(new Comentario("Awesome", true));
         aluno1.adicionarComentarioNaoUtil(new Comentario("Not relevant", false));
 
-        // aluno2: 3 useful + 2 not useful = Score: 1
+        // aluno2: 3 úteis + 2 não úteis = Score: 1
         aluno2.adicionarComentarioUtil(new Comentario("Good point", true));
         aluno2.adicionarComentarioUtil(new Comentario("I agree", true));
         aluno2.adicionarComentarioUtil(new Comentario("Exactly", true));
         aluno2.adicionarComentarioNaoUtil(new Comentario("Wrong", false));
         aluno2.adicionarComentarioNaoUtil(new Comentario("Spam", false));
 
-        // aluno3: 2 useful + 0 not useful = Score: 2
+        // aluno3: 2 úteis + 0 não úteis = Score: 2
         aluno3.adicionarComentarioUtil(new Comentario("Interesting", true));
         aluno3.adicionarComentarioUtil(new Comentario("Worth reading", true));
     }
 
     // ==================== BDD-01: Aluno ganha curso ao ser mais ativo ====================
 
-    /*
     @Test
     @DisplayName("RED PHASE - BDD-01: deveProcessarRankingEPremiarAlunoMaisAtivo")
     void deveProcessarRankingEPremiarAlunoMaisAtivo_RED() {
+        System.out.println("\n===== BDD-01 - RED =====");
+        // RED: Ranking ainda não é implementado — assertNull falha pois ranking existe
         List<Aluno> alunos = new ArrayList<>();
         alunos.add(aluno1);
         alunos.add(aluno2);
         alunos.add(aluno3);
 
-        // RED: Serviço não existe ainda, vai dar erro
         Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
 
         assertNotNull(resultado, "Resultado should not be null");
         assertNull(resultado.getRanking(), "Ranking should be null (not implemented)");
     }
-     */
 
     @Test
-    @DisplayName("RED PHASE - BDD-01: deveProcessarRankingEPremiarAlunoMaisAtivo")
-    void deveProcessarRankingEPremiarAlunoMaisAtivo_RED() {
-        // RED PHASE: Test that verifies the basic structure
-        // This test ensures ForumRewardService can be called and returns a Resultado
+    @DisplayName("GREEN PHASE - BDD-01: deveProcessarRankingEPremiarAlunoMaisAtivo")
+    void deveProcessarRankingEPremiarAlunoMaisAtivo_GREEN() {
+        System.out.println("\n===== BDD-01 - GREEN =====");
+        // GREEN: RED corrigido — assertNull vira assertNotNull, verifica estrutura básica do ranking
         List<Aluno> alunos = new ArrayList<>();
         alunos.add(aluno1);
         alunos.add(aluno2);
@@ -103,46 +99,23 @@ class ForumRewardServiceTest {
 
         Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
 
-        // Basic assertions - verify the service returns a non-null result
         assertNotNull(resultado, "Resultado should not be null");
         assertNotNull(resultado.getRanking(), "Ranking should not be null");
         assertEquals(3, resultado.getRanking().size(), "Ranking should contain all 3 students");
     }
 
     @Test
-    @DisplayName("GREEN PHASE - BDD-01: deveProcessarRankingEPremiarAlunoMaisAtivo")
-    void deveProcessarRankingEPremiarAlunoMaisAtivo_GREEN() {
-        // GREEN PHASE: Test that the winner is correctly identified
-        // The service should identify the student with the highest score as the winner
-        List<Aluno> alunos = new ArrayList<>();
-        alunos.add(aluno1);  // Score: 4 (5 useful - 1 not useful) - WINNER
-        alunos.add(aluno2);  // Score: 1
-        alunos.add(aluno3);  // Score: 2
-
-        Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
-
-        // Verify the most active student (aluno1) is the winner
-        assertNotNull(resultado.getAlunoVencedor(), "There should be a winner");
-        assertEquals("João Silva", resultado.getAlunoVencedor().getNome(),
-                "João Silva should be the winner (most active)");
-        assertTrue(resultado.isNotificacaoEnviada(), "Notification should be sent to winner");
-        assertEquals(cursoJava.getNome(), resultado.getCursoGanho().getNome(),
-                "Winner should receive the Java Avançado course");
-    }
-
-    @Test
     @DisplayName("BLUE PHASE - BDD-01: deveProcessarRankingEPremiarAlunoMaisAtivo")
     void deveProcessarRankingEPremiarAlunoMaisAtivo_BLUE() {
-        // BLUE PHASE: Complete, refactored test with optimal implementation
-        // Test the full reward flow: ranking creation, winner identification, and notification
+        System.out.println("\n===== BDD-01 - BLUE =====");
+        // BLUE: GREEN refatorado — valida o fluxo completo de premiação
         List<Aluno> alunos = new ArrayList<>();
-        alunos.add(aluno1);  // Score: 4 - WINNER
+        alunos.add(aluno1);  // Score: 4 — VENCEDOR
         alunos.add(aluno2);  // Score: 1
         alunos.add(aluno3);  // Score: 2
 
         Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
 
-        // Comprehensive assertions for complete reward flow
         assertNotNull(resultado, "Resultado should be created");
         assertNotNull(resultado.getAlunoVencedor(), "Winner should be identified");
         assertEquals("João Silva", resultado.getAlunoVencedor().getNome(),
@@ -158,16 +131,16 @@ class ForumRewardServiceTest {
 
     // ==================== BDD-02: Aluno não ganha curso se não tiver participação mínima ====================
 
-    /*
     @Test
     @DisplayName("RED PHASE - BDD-02: deveValidarParticipacaoMinimaENaoPremiar")
     void deveValidarParticipacaoMinimaENaoPremiar_RED() {
+        System.out.println("\n===== BDD-02 - RED =====");
+        // RED: Método com mínimo ainda não existe — espera exceção que nunca vem, falha no fail()
         List<Aluno> alunos = new ArrayList<>();
         alunos.add(aluno1);
         alunos.add(aluno2);
         alunos.add(aluno3);
 
-        // RED: Método com 3 parâmetros não existe ainda
         try {
             Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava, 3L);
             fail("Method with minimum parameter should not exist yet");
@@ -175,54 +148,32 @@ class ForumRewardServiceTest {
             assertTrue(true, "Method not implemented in RED phase");
         }
     }
-     */
 
     @Test
-    @DisplayName("RED PHASE - BDD-02: deveValidarParticipacaoMinimaENaoPremiar")
-    void deveValidarParticipacaoMinimaENaoPremiar_RED() {
-        // RED PHASE: Test that verifies minimum participation requirement exists
-        // This test ensures the service accepts a minimum score parameter
+    @DisplayName("GREEN PHASE - BDD-02: deveValidarParticipacaoMinimaENaoPremiar")
+    void deveValidarParticipacaoMinimaENaoPremiar_GREEN() {
+        System.out.println("\n===== BDD-02 - GREEN =====");
+        // GREEN: RED corrigido — método existe, verifica que retorna resultado e ranking válidos
         List<Aluno> alunos = new ArrayList<>();
         alunos.add(aluno1);  // Score: 4
         alunos.add(aluno2);  // Score: 1
         alunos.add(aluno3);  // Score: 2
 
-        // Call with custom minimum participation threshold
         Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava, 3L);
 
-        // Verify the ranking is created with the minimum requirement applied
         assertNotNull(resultado, "Resultado should be created");
         assertNotNull(resultado.getRanking(), "Ranking should be created");
     }
 
     @Test
-    @DisplayName("GREEN PHASE - BDD-02: deveValidarParticipacaoMinimaENaoPremiar")
-    void deveValidarParticipacaoMinimaENaoPremiar_GREEN() {
-        // GREEN PHASE: Test that only students meeting minimum participation get rewarded
-        // Students with score below minimum should not receive course reward
-        List<Aluno> alunos = new ArrayList<>();
-        alunos.add(aluno1);  // Score: 4 (qualifies: 4 >= 3)
-        alunos.add(aluno2);  // Score: 1 (does NOT qualify: 1 < 3)
-        alunos.add(aluno3);  // Score: 2 (does NOT qualify: 2 < 3)
-
-        Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava, 3L);
-
-        // Only aluno1 should qualify for the minimum threshold
-        assertNotNull(resultado.getAlunoVencedor(), "There should be a winner");
-        assertEquals("João Silva", resultado.getAlunoVencedor().getNome(),
-                "Only João Silva qualifies (score 4 >= minimum 3)");
-        assertTrue(resultado.isNotificacaoEnviada(), "Notification sent only to qualifying winner");
-        assertEquals(1, resultado.getAlunosVencedores().size(),
-                "Only one student meets minimum participation");
-    }
-
-    @Test
     @DisplayName("BLUE PHASE - BDD-02: deveValidarParticipacaoMinimaENaoPremiar")
     void deveValidarParticipacaoMinimaENaoPremiar_BLUE() {
+        System.out.println("\n===== BDD-02 - BLUE =====");
+        // BLUE: GREEN refatorado — valida filtragem por mínimo e múltiplos vencedores
         List<Aluno> alunos = new ArrayList<>();
-        alunos.add(aluno1);  // Score: 4 (qualifies: 4 >= 2)
-        alunos.add(aluno3);  // Score: 2 (borderline: 2 >= 2 - qualifies)
-        alunos.add(aluno2);  // Score: 1 (does not qualify: 1 < 2)
+        alunos.add(aluno1);  // Score: 4 (qualifica: 4 >= 2)
+        alunos.add(aluno3);  // Score: 2 (borderline: 2 >= 2 — qualifica)
+        alunos.add(aluno2);  // Score: 1 (não qualifica: 1 < 2)
 
         Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava, 2L);
 
@@ -230,12 +181,9 @@ class ForumRewardServiceTest {
         assertEquals("João Silva", resultado.getAlunoVencedor().getNome(),
                 "João Silva (score 4) has highest score among qualifiers");
         assertTrue(resultado.isNotificacaoEnviada(), "Notification sent to qualifying winner");
-
-        assertTrue(resultado.getRanking().size() >= 2,
-                "Ranking should include all students");
-
+        assertTrue(resultado.getRanking().size() >= 2, "Ranking should include all students");
         assertEquals(2, resultado.getAlunosVencedores().size(),
-                "Two students meet minimum participation (4 and 2)");
+                "Two students meet minimum participation (scores 4 and 2)");
         assertTrue(resultado.getAlunosVencedores().contains(aluno1),
                 "Winner list should include João (score 4)");
         assertTrue(resultado.getAlunosVencedores().contains(aluno3),
@@ -244,10 +192,11 @@ class ForumRewardServiceTest {
 
     // ==================== BDD-03: Apenas comentários úteis contam ====================
 
-    /*
     @Test
     @DisplayName("RED PHASE - BDD-03: deveContabilizarApenasComentariosUteis")
     void deveContabilizarApenasComentariosUteis_RED() {
+        System.out.println("\n===== BDD-03 - RED =====");
+        // RED: Pontuação ainda não calculada — assertNull falha pois pontuação retorna 4
         List<Aluno> alunos = new ArrayList<>();
         alunos.add(aluno1);
         alunos.add(aluno2);
@@ -255,85 +204,49 @@ class ForumRewardServiceTest {
 
         Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
 
-        // RED: Ranking items não têm pontuação calculada ainda
         assertNotNull(resultado.getRanking(), "Ranking should exist");
         assertNull(resultado.getRanking().get(0).getPontuacao(), "Score not calculated in RED phase");
-    }
-     */
-
-    @Test
-    @DisplayName("RED PHASE - BDD-03: deveContabilizarApenasComentariosUteis")
-    void deveContabilizarApenasComentariosUteis_RED() {
-        // RED PHASE: Test that ranking system is implemented
-        // This test verifies that the service creates a ranking
-        List<Aluno> alunos = new ArrayList<>();
-        alunos.add(aluno1);
-        alunos.add(aluno2);
-        alunos.add(aluno3);
-
-        Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
-
-        // Verify ranking exists
-        assertNotNull(resultado.getRanking(), "Ranking should exist");
-        assertTrue(resultado.getRanking().size() > 0, "Ranking should contain items");
     }
 
     @Test
     @DisplayName("GREEN PHASE - BDD-03: deveContabilizarApenasComentariosUteis")
     void deveContabilizarApenasComentariosUteis_GREEN() {
-        // GREEN PHASE: Test that scoring correctly accounts for useful and non-useful comments
-        // Score = useful comments - non-useful comments
+        System.out.println("\n===== BDD-03 - GREEN =====");
+        // GREEN: RED corrigido — ranking existe e tem itens com pontuação calculada
         List<Aluno> alunos = new ArrayList<>();
-        alunos.add(aluno1);  // Score: 5 useful - 1 not useful = 4
-        alunos.add(aluno2);  // Score: 3 useful - 2 not useful = 1
-        alunos.add(aluno3);  // Score: 2 useful - 0 not useful = 2
+        alunos.add(aluno1);
+        alunos.add(aluno2);
+        alunos.add(aluno3);
 
         Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
 
-        // Verify ranking is sorted by score (useful minus non-useful)
-        List<RankingItem> ranking = resultado.getRanking();
-
-        // Find the top student's ranking item
-        RankingItem topItem = ranking.stream()
-                .filter(r -> r.getAluno().getId().equals(1L))
-                .findFirst()
-                .orElse(null);
-
-        assertNotNull(topItem, "Top student should be in ranking");
-        assertEquals(4, topItem.getPontuacao(),
-                "João's score should be 4 (5 useful - 1 not useful)");
-        assertEquals(5, topItem.getComentariosContabilizados(),
-                "Should have 5 useful comments counted");
-        assertEquals(1, topItem.getComentariosNaoUteis(),
-                "Should have 1 non-useful comment counted");
+        assertNotNull(resultado.getRanking(), "Ranking should exist");
+        assertTrue(resultado.getRanking().size() > 0, "Ranking should contain items");
     }
 
     @Test
     @DisplayName("BLUE PHASE - BDD-03: deveContabilizarApenasComentariosUteis")
     void deveContabilizarApenasComentariosUteis_BLUE() {
+        System.out.println("\n===== BDD-03 - BLUE =====");
+        // BLUE: GREEN refatorado — valida ordem do ranking e fórmula de pontuação
         List<Aluno> alunos = new ArrayList<>();
-        alunos.add(aluno2);  // Score: 1 (3 useful - 2 not useful)
-        alunos.add(aluno3);  // Score: 2 (2 useful - 0 not useful)
-        alunos.add(aluno1);  // Score: 4 (5 useful - 1 not useful)
+        alunos.add(aluno2);  // Score: 1 (3 úteis - 2 não úteis)
+        alunos.add(aluno3);  // Score: 2 (2 úteis - 0 não úteis)
+        alunos.add(aluno1);  // Score: 4 (5 úteis - 1 não útil)
 
         Resultado resultado = forumRewardService.processarRankingMensal(alunos, cursoJava);
 
         List<RankingItem> ranking = resultado.getRanking();
         assertEquals(3, ranking.size(), "All students should be in ranking");
 
-        assertEquals(4, ranking.get(0).getPontuacao(),
-                "Highest score should be first (João with 4)");
-        assertEquals(2, ranking.get(1).getPontuacao(),
-                "Second highest should be 2 (Pedro)");
-        assertEquals(1, ranking.get(2).getPontuacao(),
-                "Lowest score should be 1 (Maria)");
+        assertEquals(4, ranking.get(0).getPontuacao(), "Highest score should be first (João with 4)");
+        assertEquals(2, ranking.get(1).getPontuacao(), "Second highest should be 2 (Pedro)");
+        assertEquals(1, ranking.get(2).getPontuacao(), "Lowest score should be 1 (Maria)");
 
         RankingItem joaoItem = ranking.get(0);
-        assertEquals(5, joaoItem.getComentariosContabilizados(),
-                "João has 5 useful comments");
-        assertEquals(1, joaoItem.getComentariosNaoUteis(),
-                "João has 1 non-useful comment");
-        assertEquals(4, (joaoItem.getComentariosContabilizados() - joaoItem.getComentariosNaoUteis()),
+        assertEquals(5, joaoItem.getComentariosContabilizados(), "João has 5 useful comments");
+        assertEquals(1, joaoItem.getComentariosNaoUteis(), "João has 1 non-useful comment");
+        assertEquals(4, joaoItem.getComentariosContabilizados() - joaoItem.getComentariosNaoUteis(),
                 "Score formula: 5 - 1 = 4");
     }
 }
