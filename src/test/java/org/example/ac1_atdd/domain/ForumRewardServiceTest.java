@@ -71,6 +71,7 @@ class ForumRewardServiceTest {
 
     // ==================== BDD-01: Aluno ganha curso ao ser mais ativo ====================
 
+    /*
     @Test
     @DisplayName("RED PHASE - BDD-01: deveProcessarRankingEPremiarAlunoMaisAtivo")
     void deveProcessarRankingEPremiarAlunoMaisAtivo_RED() {
@@ -86,6 +87,7 @@ class ForumRewardServiceTest {
         assertNotNull(resultado, "Resultado should not be null");
         assertNull(resultado.getRanking(), "Ranking should be null (not implemented)");
     }
+     */
 
     @Test
     @DisplayName("GREEN PHASE - BDD-01: deveProcessarRankingEPremiarAlunoMaisAtivo")
@@ -131,6 +133,7 @@ class ForumRewardServiceTest {
 
     // ==================== BDD-02: Aluno não ganha curso se não tiver participação mínima ====================
 
+    /*
     @Test
     @DisplayName("RED PHASE - BDD-02: deveValidarParticipacaoMinimaENaoPremiar")
     void deveValidarParticipacaoMinimaENaoPremiar_RED() {
@@ -148,6 +151,7 @@ class ForumRewardServiceTest {
             assertTrue(true, "Method not implemented in RED phase");
         }
     }
+     */
 
     @Test
     @DisplayName("GREEN PHASE - BDD-02: deveValidarParticipacaoMinimaENaoPremiar")
@@ -192,6 +196,7 @@ class ForumRewardServiceTest {
 
     // ==================== BDD-03: Apenas comentários úteis contam ====================
 
+    /*
     @Test
     @DisplayName("RED PHASE - BDD-03: deveContabilizarApenasComentariosUteis")
     void deveContabilizarApenasComentariosUteis_RED() {
@@ -207,6 +212,7 @@ class ForumRewardServiceTest {
         assertNotNull(resultado.getRanking(), "Ranking should exist");
         assertNull(resultado.getRanking().get(0).getPontuacao(), "Score not calculated in RED phase");
     }
+     */
 
     @Test
     @DisplayName("GREEN PHASE - BDD-03: deveContabilizarApenasComentariosUteis")
