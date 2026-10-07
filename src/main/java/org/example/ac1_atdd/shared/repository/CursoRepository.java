@@ -1,6 +1,6 @@
-package org.example.ac1_atdd.repository;
+package org.example.ac1_atdd.shared.repository;
 
-import org.example.ac1_atdd.domain.Curso;
+import org.example.ac1_atdd.shared.domain.Curso;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;

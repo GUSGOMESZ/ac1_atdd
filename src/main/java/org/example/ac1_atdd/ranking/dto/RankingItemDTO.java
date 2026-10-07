@@ -1,5 +1,5 @@
 // RankingItemDTO.java
-package org.example.ac1_atdd.dto;
+package org.example.ac1_atdd.ranking.dto;
 
 public class RankingItemDTO {
     private Long id;

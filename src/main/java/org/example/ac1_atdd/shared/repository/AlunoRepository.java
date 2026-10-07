@@ -1,6 +1,6 @@
-package org.example.ac1_atdd.repository;
+package org.example.ac1_atdd.shared.repository;
 
-import org.example.ac1_atdd.domain.Aluno;
+import org.example.ac1_atdd.ranking.domain.Aluno;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;

@@ -1,8 +1,13 @@
-package org.example.ac1_atdd.controller;
+package org.example.ac1_atdd.ranking.api;
 
-import org.example.ac1_atdd.domain.*;
-import org.example.ac1_atdd.service.ForumRewardService;
-import org.example.ac1_atdd.repository.*;
+import org.example.ac1_atdd.ranking.domain.Aluno;
+import org.example.ac1_atdd.ranking.domain.Comentario;
+import org.example.ac1_atdd.ranking.domain.Resultado;
+import org.example.ac1_atdd.ranking.repository.ResultadoRepository;
+import org.example.ac1_atdd.ranking.service.ForumRewardService;
+import org.example.ac1_atdd.shared.domain.Curso;
+import org.example.ac1_atdd.shared.repository.AlunoRepository;
+import org.example.ac1_atdd.shared.repository.CursoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

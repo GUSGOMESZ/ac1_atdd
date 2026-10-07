@@ -1,6 +1,8 @@
-package org.example.ac1_atdd.domain;
+package org.example.ac1_atdd.ranking.domain;
 
 import jakarta.persistence.*;
+import org.example.ac1_atdd.shared.domain.Curso;
+
 import java.util.ArrayList;
 import java.util.List;
 

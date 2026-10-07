@@ -1,5 +1,8 @@
 // ResultadoDTO.java
-package org.example.ac1_atdd.dto;
+package org.example.ac1_atdd.ranking.dto;
+
+import org.example.ac1_atdd.shared.dto.AlunoDTO;
+import org.example.ac1_atdd.shared.dto.CursoDTO;
 
 import java.util.List;
 

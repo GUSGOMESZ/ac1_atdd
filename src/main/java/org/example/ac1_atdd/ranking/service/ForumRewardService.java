@@ -1,6 +1,9 @@
-package org.example.ac1_atdd.service;
+package org.example.ac1_atdd.ranking.service;
 
-import org.example.ac1_atdd.domain.*;
+import org.example.ac1_atdd.ranking.domain.Aluno;
+import org.example.ac1_atdd.ranking.domain.RankingItem;
+import org.example.ac1_atdd.ranking.domain.Resultado;
+import org.example.ac1_atdd.shared.domain.Curso;
 import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;

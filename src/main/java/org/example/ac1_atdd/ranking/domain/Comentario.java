@@ -1,4 +1,4 @@
-package org.example.ac1_atdd.domain;
+package org.example.ac1_atdd.ranking.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

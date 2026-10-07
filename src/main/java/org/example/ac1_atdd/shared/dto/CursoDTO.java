@@ -1,4 +1,4 @@
-package org.example.ac1_atdd.dto;
+package org.example.ac1_atdd.shared.dto;
 
 public class CursoDTO {
     private Long id;

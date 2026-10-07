@@ -1,6 +1,11 @@
 package org.example.ac1_atdd.domain;
 
-import org.example.ac1_atdd.service.ForumRewardService;
+import org.example.ac1_atdd.ranking.domain.Aluno;
+import org.example.ac1_atdd.ranking.domain.Comentario;
+import org.example.ac1_atdd.ranking.domain.RankingItem;
+import org.example.ac1_atdd.ranking.domain.Resultado;
+import org.example.ac1_atdd.ranking.service.ForumRewardService;
+import org.example.ac1_atdd.shared.domain.Curso;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

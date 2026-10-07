@@ -1,4 +1,4 @@
-package org.example.ac1_atdd.domain;
+package org.example.ac1_atdd.shared.domain;
 
 import jakarta.persistence.*;
 
