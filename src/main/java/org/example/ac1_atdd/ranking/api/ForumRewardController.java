@@ -1,10 +1,10 @@
 package org.example.ac1_atdd.ranking.api;
 
-import org.example.ac1_atdd.ranking.domain.Aluno;
-import org.example.ac1_atdd.ranking.domain.Comentario;
-import org.example.ac1_atdd.ranking.domain.Resultado;
-import org.example.ac1_atdd.ranking.repository.ResultadoRepository;
-import org.example.ac1_atdd.ranking.service.ForumRewardService;
+import org.example.ac1_atdd.ranking.internal.domain.Aluno;
+import org.example.ac1_atdd.ranking.internal.domain.Comentario;
+import org.example.ac1_atdd.ranking.internal.domain.Resultado;
+import org.example.ac1_atdd.ranking.internal.repository.ResultadoRepository;
+import org.example.ac1_atdd.ranking.internal.service.ForumRewardService;
 import org.example.ac1_atdd.shared.domain.Curso;
 import org.example.ac1_atdd.shared.repository.AlunoRepository;
 import org.example.ac1_atdd.shared.repository.CursoRepository;

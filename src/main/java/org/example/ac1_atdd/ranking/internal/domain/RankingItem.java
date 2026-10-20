@@ -1,4 +1,4 @@
-package org.example.ac1_atdd.ranking.domain;
+package org.example.ac1_atdd.ranking.internal.domain;
 
 import jakarta.persistence.*;
 

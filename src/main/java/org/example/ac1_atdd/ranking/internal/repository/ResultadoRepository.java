@@ -1,6 +1,6 @@
-package org.example.ac1_atdd.ranking.repository;
+package org.example.ac1_atdd.ranking.internal.repository;
 
-import org.example.ac1_atdd.ranking.domain.Resultado;
+import org.example.ac1_atdd.ranking.internal.domain.Resultado;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

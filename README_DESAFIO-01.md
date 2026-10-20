@@ -160,20 +160,26 @@ as circunstâncias da AC2, uma nova abordagem deve ser adotada.
 - Prepara evolução para futuros serviços (Desafios 3+)
 
 ### Decisão
-Reorganizar o **Core em módulos temáticos** (Ranking, Conquistas, Shared), mantendo como **um único deployment** mas com **fronteiras explícitas** entre domínios.
+Reorganizar o **Core em módulos temáticos** (Ranking, Conquistas, Shared), mantendo como **um único deployment** mas com **fronteiras explícitas** entre domínios. Cada módulo expõe uma camada `api/` pública (Controllers + DTOs) e encapsula sua lógica em `internal/` (Service, Repository, Domain).
 
 ```
 src/main/java/org/example/ac1_atdd/
 ├── ranking/
-│   ├── domain/
-│   ├── service/
-│   └── repository/
+│   ├── api/         ← ForumRewardController, RankingItemDTO, ResultadoDTO
+│   └── internal/
+│       ├── domain/      (Aluno, Comentario, RankingItem, Resultado)
+│       ├── service/     (ForumRewardService)
+│       └── repository/  (RankingItemRepository, ResultadoRepository)
 ├── conquistas/
-│   ├── domain/
-│   ├── service/
-│   └── repository/
+│   ├── api/         ← ConquistasController, ConquistaDTO
+│   └── internal/
+│       ├── domain/      (Conquista)
+│       ├── service/     (ConquistasService)
+│       └── repository/  (ConquistaRepository)
 └── shared/
-    └── domain/
+    ├── domain/      (Curso)
+    ├── dto/         (AlunoDTO, CursoDTO)
+    └── repository/  (AlunoRepository, CursoRepository)
 ```
 
 ### Justificativa
@@ -265,24 +271,27 @@ src/main/java/org/example/ac1_atdd/
 └── dto/          (AlunoDTO, CursoDTO, etc)
 ```
 
-**DEPOIS (Objetivo - Monólito Modular):**
+**DEPOIS (Implementado - Monólito Modular com api/ + internal/):**
 ```
 src/main/java/org/example/ac1_atdd/
 ├── ranking/
-│   ├── domain/       (Aluno, Comentario, RankingItem, Resultado)
-│   ├── service/      (ForumRewardService)
-│   ├── repository/   (RankingItemRepository, ResultadoRepository)
-│   └── api/          (RankingController)
+│   ├── api/              ← PUBLIC: ForumRewardController, RankingItemDTO, ResultadoDTO
+│   └── internal/         ← ENCAPSULADO (não acessível por outros módulos diretamente)
+│       ├── domain/       (Aluno, Comentario, RankingItem, Resultado)
+│       ├── service/      (ForumRewardService)
+│       └── repository/   (RankingItemRepository, ResultadoRepository)
 │
 ├── conquistas/
-│   ├── domain/       (Conquista, Badge)
-│   ├── service/      (ConquistaService)
-│   ├── repository/   (ConquistaRepository)
-│   └── api/          (ConquistaController)
+│   ├── api/              ← PUBLIC: ConquistasController, ConquistaDTO
+│   └── internal/         ← ENCAPSULADO
+│       ├── domain/       (Conquista)
+│       ├── service/      (ConquistasService)
+│       └── repository/   (ConquistaRepository)
 │
 └── shared/
-    ├── domain/       (Curso, Usuario)
-    └── config/       (Configurações comuns)
+    ├── domain/           (Curso)
+    ├── dto/              (AlunoDTO, CursoDTO)
+    └── repository/       (AlunoRepository, CursoRepository)
 ```
 
 ### Passos Executados
@@ -314,12 +323,45 @@ src/main/java/org/example/ac1_atdd/
 
 ### Comparação de Dependências
 
-| Métrica | ANTES | DEPOIS (Objetivo) |
-|---------|-------|-------------------|
-| Pacotes | 5 (domain, service, repo, controller, dto) | 6+ (ranking/*, conquistas/*, shared/*) |
-| Imports cruzados | Alto (tudo importa de domain/) | Baixo (cada módulo importa seu domain/) |
-| Acoplamento | Alto | Baixo |
-| Testabilidade | Média | Alta |
+| Métrica | ANTES (Monólito em Camadas) | DEPOIS (Monólito Modular) |
+|---------|-----------------------------|---------------------------|
+| Organização | Por camada técnica (domain/, service/, repo/) | Por capacidade de negócio (ranking/, conquistas/) |
+| Pacotes | 5 flat (domain, service, repo, controller, dto) | 3 módulos × api/ + internal/ = fronteiras explícitas |
+| Imports cruzados | Alto — tudo importa de um `domain/` global | Baixo — cada módulo encapsula seu próprio domain |
+| Acoplamento | Alto — mudança em domain quebra service e controller | Baixo — mudança em ranking/internal não afeta conquistas |
+| Testabilidade | Média — testes precisam de mocks de dependências globais | Alta — cada módulo pode ser testado isoladamente |
+| Evolução futura | Difícil extrair módulo para serviço | Fácil — contrato via api/ já está definido |
+
+### Evidência de Dependências ANTES vs DEPOIS
+
+**ANTES — dependências misturadas (AC1 - monólito em camadas):**
+```
+controller/ForumRewardController
+    └── imports: domain.Aluno, domain.Resultado, domain.Curso
+                 service.ForumRewardService
+                 repository.AlunoRepository, repository.CursoRepository
+
+service/ForumRewardService
+    └── imports: domain.Aluno, domain.RankingItem, domain.Resultado, domain.Curso
+
+# Problema: domain/ é compartilhado por TODOS — qualquer mudança quebra tudo
+```
+
+**DEPOIS — dependências explícitas por módulo (Desafio 1 - modular):**
+```
+ranking/api/ForumRewardController
+    └── imports: ranking.internal.domain.*        (próprio módulo)
+                 ranking.internal.service.*        (próprio módulo)
+                 ranking.internal.repository.*     (próprio módulo)
+                 shared.domain.Curso              (shared = contrato)
+                 shared.repository.*              (shared = contrato)
+
+conquistas/api/ConquistasController
+    └── imports: conquistas.internal.domain.*     (próprio módulo)
+                 conquistas.internal.service.*    (próprio módulo)
+
+# Resultado: conquistas não depende de ranking — ciclos de mudança independentes
+```
 
 ---
 
@@ -341,7 +383,42 @@ src/main/java/org/example/ac1_atdd/
 ### O que mudou arquiteturalmente?
 
 **De A1 para A2 - Desafio 1:**
-- ❌ **Antes:** Monólito em Camadas (tudo junto)
-- ✅ **Depois:** Monólito Modular (módulos isolados)
+- ❌ **Antes:** Monólito em Camadas — organização por camada técnica, acoplamento alto, difícil evoluir
+- ✅ **Depois:** Monólito Modular — organização por capacidade de negócio, fronteiras explícitas via `api/` + `internal/`
+
+### O que foi comprovado no Mini-Lab?
+
+1. **Compilação sem erros** — a refatoração foi executada sem quebrar o build
+2. **Testes passando** — os 6 testes ativos (GREEN + BLUE das 3 BDDs) continuam verdes após a migração de pacotes
+3. **Fronteiras funcionando** — `conquistas/` não importa nada de `ranking/internal/`, apenas o módulo `shared/`
+4. **Docker rodando** — a aplicação sobe normalmente após refatoração
+
+### Conclusão Racional: Por que Monólito Modular agora e não Microsserviços?
+
+**A pergunta central:** com crescimento de 1k → 100k usuários, por que não ir direto para microsserviços?
+
+**Resposta:**
+
+| Fator | Microsserviços | Monólito Modular |
+|-------|----------------|-----------------|
+| Equipe de 6 devs | ❌ Inviável — N pipelines, N repos, N deploys | ✅ 1 repo, 1 deploy, 1 pipeline |
+| Operação do ranking | ❌ Requer service mesh, tracing distribuído | ✅ Logs centralizados, 1 JVM |
+| Transações entre módulos | ❌ Sagas, compensações, eventual consistency | ✅ Transações ACID locais |
+| Tempo de migração do legado AC1 | ❌ Alto — reescrever tudo como serviços | ✅ Refatoração incremental mantendo legado |
+| Preparação para o futuro | ✅✅ Deploy independente já | ✅ Contrato via api/ facilita extração futura |
+
+**Raciocínio:** O Monólito Modular **resolve os ASRs críticos agora** (manutenibilidade e complexidade operacional) sem o overhead operacional que inviabilizaria a equipe. A separação em `api/` + `internal/` **prepara o terreno** para uma futura extração em serviços quando a escala realmente exigir — e a equipe tiver crescido para suportar essa complexidade.
+
+**Microsserviços seria a escolha certa se:** a equipe tivesse 20+ devs, times independentes por domínio, ou se o ranking exigisse deploy/escala completamente independente em produção já.
+
+### Próximos Passos (Desafios 2-6)
+
+| Desafio | Evolução Planejada |
+|---------|--------------------|
+| Desafio 2 | Ports & Adapters — isolar ranking da infraestrutura via interfaces |
+| Desafio 3 | Serviço Python de IA — primeiro serviço externo ao monólito |
+| Desafio 4 | Event-driven — ranking dispara eventos para conquistas |
+| Desafio 5 | MQTT — integração IoT sem acoplamento direto |
+| Desafio 6 | CI/CD independente por módulo — pipeline separado para ranking |
 
 ---
