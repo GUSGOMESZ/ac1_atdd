@@ -6,7 +6,7 @@ import org.example.ac1_atdd.ranking.internal.domain.Resultado;
 import org.example.ac1_atdd.ranking.internal.repository.ResultadoRepository;
 import org.example.ac1_atdd.ranking.internal.service.ForumRewardService;
 import org.example.ac1_atdd.shared.domain.Curso;
-import org.example.ac1_atdd.shared.repository.AlunoRepository;
+import org.example.ac1_atdd.ranking.internal.repository.AlunoRepository;
 import org.example.ac1_atdd.shared.repository.CursoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package org.example.ac1_atdd.domain;
+package org.example.ac1_atdd.ranking;
 
 import org.example.ac1_atdd.ranking.internal.domain.Aluno;
 import org.example.ac1_atdd.ranking.internal.domain.Comentario;
