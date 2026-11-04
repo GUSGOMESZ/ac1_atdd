@@ -2,6 +2,9 @@
 
 Projeto de implementação de **TDD (Test-Driven Development)** e **BDD (Behavior-Driven Development)** usando Spring Boot, Cucumber e Testes Unitários com JUnit.
 
+> 🏗️ **Exercício B1 — Desafio 1 (branch `desafio-1`):** o Core evoluiu de Monólito em Camadas para **Monólito Modular**.
+> Registro arquitetural completo (RF → ASR → ADR-001 → C4 → evidência): **[docs/arquitetura/README.md](docs/arquitetura/README.md)**
+
 ![img_5.png](img_5.png)
 
 ---
@@ -540,35 +543,32 @@ void deveContabilizarApenasComentariosUteis_BLUE() {
 
 ## 🏗️ Estrutura do Projeto
 
+Monólito Modular (Desafio 1 do B1). Na AC1 a estrutura era em camadas (`controller/`, `service/`, `repository/`, `domain/`, `dto/`); a comparação antes × depois está em [docs/arquitetura/README.md](docs/arquitetura/README.md#9-mini-lab--evidência-arquitetural).
+
 ```
 ac1_atdd/
 ├── src/
-│   ├── main/
-│   │   └── java/org/example/ac1_atdd/
-│   │       ├── domain/
-│   │       │   ├── Aluno.java
-│   │       │   ├── Comentario.java
-│   │       │   ├── Curso.java
-│   │       │   ├── Resultado.java
-│   │       │   └── RankingItem.java
-│   │       ├── dto/
-│   │       │   ├── AlunoDTO.java
-│   │       │   ├── CursoDTO.java
-│   │       │   ├── RankingItemDTO.java
-│   │       │   └── ResultadoDTO.java
-│   │       ├── repository/
-│   │       │   ├── AlunoRepository.java
-│   │       │   ├── CursoRepository.java
-│   │       │   ├── RankingItemRepository.java
-│   │       │   └── ResultadoRepository.java
-│   │       ├── service/
-│   │       │   └── ForumRewardService.java
-│   │       └── controller/
-│   │           └── ForumRewardController.java
+│   ├── main/java/org/example/ac1_atdd/
+│   │   ├── ranking/                    ← ranking mensal do fórum (RF01)
+│   │   │   ├── api/                    ForumRewardController, RankingItemDTO, ResultadoDTO
+│   │   │   └── internal/
+│   │   │       ├── domain/             Aluno, Comentario, RankingItem, Resultado
+│   │   │       ├── service/            ForumRewardService
+│   │   │       └── repository/         AlunoRepository, RankingItemRepository, ResultadoRepository
+│   │   ├── conquistas/                 ← conquistas / badges (RF02)
+│   │   │   ├── api/                    ConquistasController, ConquistaDTO
+│   │   │   └── internal/               domain/Conquista, service/ConquistasService, repository/ConquistaRepository
+│   │   └── shared/                     ← usado por mais de um módulo
+│   │       ├── domain/                 Curso
+│   │       ├── dto/                    AlunoDTO, CursoDTO
+│   │       └── repository/             CursoRepository
 │   └── test/
-│       └── java/org/example/ac1_atdd/domain/
-│           └── ForumRewardServiceTest.java
-├── frontend/          (Vue 3 + Vite)
+│       ├── java/org/example/ac1_atdd/
+│       │   ├── ArquiteturaModularTest.java       (fronteiras entre módulos)
+│       │   └── ranking/ForumRewardServiceTest.java
+│       └── resources/application.properties     (H2 em memória para testes)
+├── docs/arquitetura/README.md   (registro arquitetural do B1)
+├── frontend/                    (Vue 3 + Vite)
 ├── Dockerfile
 ├── docker-compose.yml
 ├── pom.xml
@@ -617,6 +617,14 @@ Base path: `/api/forum-rewards`
 | GET | `/alunos/{id}/score` | Retorna pontuação do aluno |
 | GET | `/cursos` | Lista cursos |
 | POST | `/cursos` | Cria curso |
+
+Módulo **conquistas** — base path: `/api/conquistas`
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/` | Lista conquistas |
+| GET | `/{id}` | Busca conquista por ID |
+| POST | `/` | Cria conquista |
 
 ---
 

@@ -14,7 +14,7 @@
 
 ## 1. Leitura do cenário
 
-O MVP da AC1 (ranking mensal do fórum, cursos como recompensa e conquistas) cresce de ~1.000 para até **100.000 usuários**. O **Ranking** cresce mais que as demais capacidades, enquanto Cursos e Conquistas continuam evoluindo em ritmo próprio.
+O MVP da AC1 (ranking mensal de participação no fórum, em que o mais ativo ganha um curso como recompensa) cresce de ~1.000 para até **100.000 usuários** e passa a receber novas capacidades de gamificação, como **Conquistas**. O **Ranking** cresce mais que as demais capacidades, enquanto Cursos e Conquistas evoluem em ritmo próprio.
 
 **Pergunta do Tech Lead:** há evidência suficiente para introduzir distribuição e deploy independente agora, ou uma modularização interna resolve o problema com menor custo operacional?
 
@@ -65,6 +65,8 @@ Nem todo RNF é ASR. Só foram escolhidos os que alteram **estrutura, implantaç
 > **DECISÃO: evoluir o Core para um MONÓLITO MODULAR.**
 
 O código passa a ser organizado por **capacidade de negócio** — `ranking`, `conquistas` e `shared` — mantendo **um único Core Spring Boot e um único deploy**. Cada módulo expõe um pacote público `api/` (controllers e DTOs) e esconde a implementação em `internal/` (domínio, serviço e repositório). O Ranking é tratado como **candidato explícito à extração futura**, mas **não** vira microsserviço só pela previsão de crescimento.
+
+Em relação às capacidades citadas no cenário: a **recompensa** do legado (curso ganho pelo vencedor do fórum) faz parte do próprio fluxo do Ranking e fica em `ranking/`; **Cursos** é usado por mais de uma capacidade e fica em `shared/`; **Conquistas** ganhou módulo próprio.
 
 **Racional:** a modularização atende manutenibilidade (ASR-01) e mantém a complexidade operacional baixa (ASR-03), ao mesmo tempo em que cria a fronteira certa para observar a escalabilidade do Ranking (ASR-02). A extração será reavaliada somente quando métricas demonstrarem necessidade.
 
@@ -166,7 +168,7 @@ O teste lê os `import` do código-fonte e **falha se uma fronteira for violada*
 | `shared` não depende de módulos de negócio | ✅ |
 | Nenhum módulo acessa o `internal` de outro módulo | ✅ |
 
-**O teste encontrou um problema real.** Na primeira versão da modularização, `shared/repository/AlunoRepository` importava `ranking.internal.domain.Aluno`, e o teste falhou:
+**O teste encontrou um problema real.** Rodado sobre a primeira versão da modularização (commit `69aa130`), ele falhou: `shared/repository/AlunoRepository` importava `ranking.internal.domain.Aluno`.
 ```
 FAIL sharedNaoDependeDeModulosDeNegocio:
   Violacoes: [shared/repository/AlunoRepository.java -> ranking.internal.domain.Aluno]
@@ -245,7 +247,7 @@ ranking -> [shared]
 | C4 | Core continua 1 container; organização interna modular |
 | Evidência | Antes/depois + matriz de dependências + `ArquiteturaModularTest` + testes BDD da AC1 |
 
-## Resumo dos ASRs
+## 13. Resumo dos ASRs
 
 | ASR | Papel na decisão do Desafio 1 |
 |---|---|
