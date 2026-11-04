@@ -1,16 +1,16 @@
-# Registro Arquitetural — Exercício B1 (Architecture Lab)
+# Registro Arquitetural — Desafio 1: Drivers e Evolução do Core
 
-> Registro cumulativo das decisões arquiteturais do Core de Gamificação (legado da AC1).
-> Padrão de cada desafio: **RF → RNF → ASR → RPC → Alternativas → ADR → C4 → Evidência**.
+> Exercício B1 (Architecture Lab): evolução do Core de Gamificação (legado da AC1).
+> Padrão da decisão: **RF → RNF → ASR → RPC → Alternativas → ADR → C4 → Evidência**.
 
-| Desafio | Decisão | ADR | Status |
-|---|---|---|---|
-| 1 — Drivers e evolução do Core | Monólito em Camadas → **Monólito Modular** | [ADR-001](#7-adr-001--evoluir-o-core-de-monólito-em-camadas-para-monólito-modular) | ✅ Aceito |
-| 2 a 6 | — | — | a fazer |
+| Item | Registro |
+|---|---|
+| Projeto | `ac1_atdd` (legado da AC1) |
+| Decisão | Monólito em Camadas → **Monólito Modular** |
+| ADR | [ADR-001](#7-adr-001--evoluir-o-core-de-monólito-em-camadas-para-monólito-modular) — ✅ Aceito |
+| Evidência | Mini-lab antes/depois + `ArquiteturaModularTest` + 12 testes passando |
 
 ---
-
-# DESAFIO 1 — DRIVERS E EVOLUÇÃO DO CORE
 
 ## 1. Leitura do cenário
 
@@ -84,7 +84,7 @@ O código passa a ser organizado por **capacidade de negócio** — `ranking`, `
 
 ## 8. C4 — Container
 
-A decisão é **interna ao Core**: continua existindo **um único container** de aplicação. O que muda é sua organização interna, que passa a ser modular. O detalhamento em **C4 Component** fica para o Desafio 2.
+A decisão é **interna ao Core**: continua existindo **um único container** de aplicação. O que muda é sua organização interna, que passa a ser modular. O detalhamento dos componentes internos (C4 Component) pode ser aprofundado em uma evolução futura.
 
 ```mermaid
 flowchart TB
@@ -245,10 +245,10 @@ ranking -> [shared]
 | C4 | Core continua 1 container; organização interna modular |
 | Evidência | Antes/depois + matriz de dependências + `ArquiteturaModularTest` + testes BDD da AC1 |
 
-## Matriz cumulativa de ASRs
+## Resumo dos ASRs
 
-| ASR | Desafio 1 | D2 | D3 | D4 | D5 | D6 |
-|---|---|---|---|---|---|---|
-| Manutenibilidade | ✅ dirige (modularização) | | | | | |
-| Escalabilidade | ⚠️ preparada (fronteira do Ranking), ainda não resolvida | | | | | |
-| Complexidade operacional | ✅ dirige (1 deploy) | | | | | |
+| ASR | Papel na decisão do Desafio 1 |
+|---|---|
+| Manutenibilidade | ✅ Dirige a decisão: modularização por capacidade |
+| Escalabilidade | ⚠️ Preparada (fronteira do Ranking pronta para extração), ainda não resolvida: é o trade-off aceito |
+| Complexidade operacional | ✅ Dirige a decisão: mantém um único deploy |
