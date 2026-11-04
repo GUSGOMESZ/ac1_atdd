@@ -201,7 +201,20 @@ Sem a organização por módulo nem haveria fronteira para verificar. No monóli
 - `Ac1AtddApplicationTests`: o contexto Spring sobe com a nova estrutura de pacotes.
 - Os testes usam **H2 em memória** (`src/test/resources/application.properties`), então rodam sem o PostgreSQL.
 
-**Resultado:** _(preencher com a saída do `mvn clean test`)_
+**Resultado (31/10/2026):** ✅ **BUILD SUCCESS — 12 testes, 0 falhas, 0 erros**
+
+| Classe de teste | Testes | Resultado |
+|---|---|---|
+| `ArquiteturaModularTest` (fronteiras entre módulos) | 5 | ✅ |
+| `ranking/ForumRewardServiceTest` (BDD-01, 02 e 03 — GREEN e BLUE da AC1) | 6 | ✅ |
+| `Ac1AtddApplicationTests` (contexto Spring) | 1 | ✅ |
+
+```
+=== Dependencias entre modulos ===
+ranking -> [shared]
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+```
 
 ## 10. Conclusão
 
